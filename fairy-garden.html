@@ -12,6 +12,10 @@
       font-family:'Zen Maru Gothic',sans-serif;
       min-height:100vh;
       background:linear-gradient(160deg,#fdf0ff 0%,#f0e0ff 45%,#e8d0ff 100%);
+      margin:0; padding:0;
+    }
+    #root {
+      min-height:100vh;
       display:flex; align-items:center; justify-content:center; padding:16px;
     }
     @keyframes float    { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
@@ -146,12 +150,13 @@
     .select-card.selected{border-color:currentColor;}
     .select-card-name{font-size:11px;font-weight:700;margin-top:2px;}
 
-    #loading{min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;}
+    #loading{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;}
     #loading .spin{font-size:48px;display:inline-block;animation:spin 2s linear infinite;}
     #loading p{color:#9050c0;font-size:14px;}
   </style>
 </head>
 <body>
+<div id="root">
 <div id="loading"><span class="spin">🧚</span><p>よみこみちゅう…</p></div>
 
 <div id="app" style="display:none">
@@ -1000,5 +1005,6 @@ window.addEventListener("DOMContentLoaded",()=>{
   saveInterval=setInterval(()=>{saveGame();},10000);
 });
 </script>
+</div>
 </body>
 </html>
