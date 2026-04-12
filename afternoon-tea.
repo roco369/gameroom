@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🫖 お嬢様のアフタヌーンティー</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --gold:#b8966a;--gold2:#d4b483;--cream:#fdf8f0;
+      --dark:#2c1f14;--text:#3a2a1a;--sub:#8a7060;--border:#d4c4a8;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+    body{
+      font-family:'Zen Maru Gothic',sans-serif;
+      background:var(--cream);color:var(--text);min-height:100vh;
+      background-image:radial-gradient(ellipse at 20% 20%,#f5e8d040 0%,transparent 60%),
+                       radial-gradient(ellipse at 80% 80%,#e8d5c840 0%,transparent 60%);
+    }
+    #root{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+    .wrap{width:100%;max-width:400px;}
+
+    .g-header{text-align:center;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border);}
+    .h-en{font-family:'Cormorant Garamond',serif;font-size:11px;letter-spacing:3px;color:var(--gold);text-transform:uppercase;margin-bottom:6px;}
+    .h-ja{font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--dark);letter-spacing:1px;}
+    .h-badge{display:inline-block;margin-top:8px;background:var(--dark);color:var(--gold2);font-size:10px;letter-spacing:2px;padding:3px 14px;border-radius:20px;}
+
+    .maid-area{display:flex;align-items:flex-end;gap:14px;margin-bottom:18px;background:white;border:1px solid var(--border);border-radius:16px;padding:14px 16px;box-shadow:0 2px 12px #b8966a15;}
+    .speech{flex:1;background:var(--cream);border:1px solid var(--border);border-radius:12px 12px 12px 4px;padding:10px 12px;font-size:12px;line-height:1.7;color:var(--text);}
+    .speech-name{font-size:10px;color:var(--gold);letter-spacing:1px;margin-bottom:4px;font-family:'Cormorant Garamond',serif;}
+
+    .steps{display:flex;gap:6px;margin-bottom:18px;justify-content:center;}
+    .dot{width:8px;height:8px;border-radius:50%;background:var(--border);transition:all 0.3s;}
+    .dot.active{background:var(--gold);transform:scale(1.3);}
+    .dot.done{background:var(--gold2);}
+
+    .sec-title{font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--dark);text-align:center;margin-bottom:14px;letter-spacing:1px;}
+    .sec-title em{color:var(--gold);font-style:normal;}
+
+    .cat-tabs{display:flex;gap:8px;margin-bottom:14px;}
+    .cat-tab{
+      flex:1;border:1.5px solid var(--border);background:white;border-radius:10px;
+      padding:8px 4px;font-family:inherit;font-size:12px;color:var(--sub);
+      transition:all 0.2s;text-align:center;line-height:1.5;
+      cursor:pointer;touch-action:manipulation;user-select:none;
+    }
+    .cat-tab.on{background:var(--dark);color:var(--gold2);border-color:var(--dark);}
+
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px;}
+    .card{
+      background:white;border:1.5px solid var(--border);border-radius:14px;
+      padding:12px 10px;text-align:center;
+      cursor:pointer;touch-action:manipulation;user-select:none;
+      transition:border-color 0.2s,background 0.2s;
+    }
+    .card.on{background:#fdf5e8;border:2px solid var(--gold);}
+    .card.dim{opacity:0.38;pointer-events:none;}
+    .c-name{font-size:12px;font-weight:700;color:var(--dark);margin:4px 0 2px;}
+    .c-orig{font-size:9px;color:var(--gold);letter-spacing:.5px;margin-bottom:3px;}
+    .c-desc{font-size:9px;color:var(--sub);line-height:1.4;}
+
+    .teaset-box{background:white;border:1px solid var(--border);border-radius:18px;padding:18px;margin-bottom:18px;text-align:center;box-shadow:0 4px 20px #b8966a10;}
+    .teaset-lbl{font-family:'Cormorant Garamond',serif;font-size:13px;color:var(--gold);letter-spacing:1px;margin-bottom:10px;}
+
+    .btn-main{width:100%;padding:13px;background:var(--dark);color:var(--gold2);border:none;border-radius:12px;font-family:'Cormorant Garamond',serif;font-size:16px;letter-spacing:2px;cursor:pointer;touch-action:manipulation;transition:opacity 0.2s;}
+    .btn-main:disabled{opacity:0.35;cursor:not-allowed;}
+    .btn-sub{width:100%;padding:10px;background:white;color:var(--dark);border:1.5px solid var(--border);border-radius:12px;font-family:inherit;font-size:13px;cursor:pointer;touch-action:manipulation;margin-top:10px;}
+
+    .res-detail{background:var(--cream);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:16px;text-align:left;}
+    .d-row{display:flex;gap:10px;align-items:flex-start;margin-bottom:10px;}
+    .d-row:last-child{margin-bottom:0;}
+    .d-name{font-size:13px;font-weight:700;color:var(--dark);}
+    .d-info{font-size:11px;color:var(--sub);line-height:1.5;margin-top:2px;}
+    .orn{text-align:center;color:var(--gold);font-size:12px;letter-spacing:4px;margin:8px 0;}
+
+    .cnt-msg{text-align:center;font-size:11px;color:var(--gold);margin-bottom:12px;}
+
+    @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+    .fu{animation:fadeUp 0.35s ease both;}
+  </style>
+</head>
+<body>
+<div id="root">
+  <div class="wrap" id="wrap"></div>
+</div>
+
+<script>
+/* ===================== データ ===================== */
+const TEAS = {
+  black:[
+    {id:"earlgrey",   name:"アールグレイ",      orig:"イングランド",      desc:"ベルガモットの香り漂う、紅茶の貴公子",        col:"#c4763a",cup:"#d4884a"},
+    {id:"darjeeling", name:"ダージリン",         orig:"インド・ダージリン", desc:"マスカテルの余韻。紅茶のシャンパン",          col:"#b8704a",cup:"#c8804a"},
+    {id:"assam",      name:"アッサム",           orig:"インド・アッサム",   desc:"コクと力強さ。ミルクティーに最高",            col:"#8b4513",cup:"#a05020"},
+    {id:"ceylon",     name:"セイロン",           orig:"スリランカ",         desc:"爽やかなコクとすっきりした後味",              col:"#b06030",cup:"#c07040"},
+    {id:"lapsang",    name:"ラプサンスーチョン", orig:"中国・福建省",       desc:"松の煙で燻した唯一無二のスモーキーな香り",    col:"#704030",cup:"#905040"},
+    {id:"keemun",     name:"キームン",           orig:"中国・安徽省",       desc:"フルーティで蘭に似た香り。東洋の宝石",        col:"#904030",cup:"#a05030"},
+  ],
+  herb:[
+    {id:"chamomile",  name:"カモミール",   orig:"ヨーロッパ",     desc:"リンゴの香り。心をほぐすやさしさ",          col:"#d4a840",cup:"#e4b840"},
+    {id:"lavender",   name:"ラベンダー",   orig:"地中海沿岸",     desc:"紫の癒し。ストレスをふわりと包む",          col:"#a080c0",cup:"#b090d0"},
+    {id:"rose",       name:"ローズ",       orig:"ブルガリア",     desc:"愛と美の象徴。女性ホルモンに寄り添う",      col:"#e07080",cup:"#f08090"},
+    {id:"lemongrass", name:"レモングラス", orig:"東南アジア",     desc:"さわやかなレモン草。気分をリフレッシュ",    col:"#80b040",cup:"#90c040"},
+    {id:"mint",       name:"ミント",       orig:"地中海沿岸",     desc:"清涼感あふれる一杯。消化を助ける",          col:"#40a060",cup:"#50b070"},
+    {id:"linden",     name:"リンデン",     orig:"ヨーロッパ",     desc:"蜂蜜のような甘い香り。安眠のお守り",        col:"#90b040",cup:"#a0c050"},
+    {id:"rosehip",    name:"ローズヒップ", orig:"ヨーロッパ全域", desc:"ビタミンCの女王。美肌と免疫に",            col:"#d05040",cup:"#e06050"},
+    {id:"hibiscus",   name:"ハイビスカス", orig:"エジプト・タイ", desc:"鮮やかなルビー色。クエン酸で元気チャージ", col:"#c03060",cup:"#d04070"},
+  ]
+};
+
+const SWEETS=[
+  {id:"scone",     name:"スコーン",           icon:"🧁", desc:"クロテッドクリームとジャムを添えて"},
+  {id:"macaron",   name:"マカロン",            icon:"🎂", desc:"カラフルな色彩が目を楽しませる"},
+  {id:"financier", name:"フィナンシェ",        icon:"🍯", desc:"バターの香り漂うフランス菓子"},
+  {id:"choco",     name:"チョコレートケーキ",  icon:"🍫", desc:"濃厚なカカオが口の中で溶けていく"},
+  {id:"tart",      name:"フルーツタルト",      icon:"🥧", desc:"季節のフルーツを彩り豊かに"},
+  {id:"cookie",    name:"クッキー＆ビスケット",icon:"🍪", desc:"サクサクの食感が紅茶と絶妙に合う"},
+  {id:"shortcake", name:"ショートケーキ",      icon:"🍰", desc:"ふわふわスポンジと甘い生クリーム"},
+];
+
+function getSlot(){
+  const h=new Date().getHours();
+  if(h>=5 &&h<11)return{lbl:"モーニング",  en:"Morning Tea",   bk:["earlgrey","darjeeling","ceylon","assam"],          hb:["chamomile","lemongrass","mint","linden"]};
+  if(h>=11&&h<15)return{lbl:"ランチタイム",en:"Luncheon Tea",  bk:["earlgrey","darjeeling","assam","ceylon","lapsang"], hb:["mint","lemongrass","rosehip","hibiscus","rose"]};
+  if(h>=15&&h<18)return{lbl:"アフタヌーン",en:"Afternoon Tea", bk:["earlgrey","darjeeling","ceylon","keemun","lapsang"],hb:["chamomile","lavender","rose","rosehip","hibiscus"]};
+  if(h>=18&&h<21)return{lbl:"イブニング",  en:"Evening Tea",   bk:["earlgrey","keemun","ceylon","assam"],               hb:["chamomile","lavender","linden","rose","mint"]};
+  return{lbl:"ナイトタイム",en:"Night Tea",bk:[],hb:["chamomile","lavender","linden","rosehip","mint"]};
+}
+
+/* ===================== 状態 ===================== */
+const slot=getSlot();
+let step=0, cat="black", selTea=null, selSweets=[];
+const MAX=3;
+
+/* ===================== SVG部品 ===================== */
+function cupSVG(color,size=38){
+  const c=color;
+  return`<svg width="${size}" height="${size}" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg">
+    <path d="M7 15 Q7 35 22 35 Q37 35 37 15 Z" fill="white" stroke="${c}" stroke-width="1.8"/>
+    <ellipse cx="22" cy="15" rx="15" ry="5" fill="white" stroke="${c}" stroke-width="1.8"/>
+    <ellipse cx="22" cy="17" rx="12" ry="3.5" fill="${c}" opacity="0.45"/>
+    <path d="M37 21 Q44 21 44 27 Q44 33 37 32" stroke="${c}" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+    <ellipse cx="22" cy="35" rx="18" ry="4.5" fill="#e8e0d0" stroke="${c}" stroke-width="1" opacity="0.6"/>
+    <path d="M12 9 Q12 5 15 6 Q15 9 12 9" fill="${c}" opacity="0.55"/>
+    <path d="M22 7 Q22 3 25 4 Q25 7 22 7" fill="${c}" opacity="0.55"/>
+    <path d="M30 10 Q31 6 34 7 Q33 10 30 10" fill="${c}" opacity="0.55"/>
+  </svg>`;
+}
+
+function maidSVG(){
+  // GitHubにアップしたらパスを変更してください（例: ./images/maid.png）
+  return`<img src="メイド1.png" width="80" height="80" style="object-fit:contain;flex-shrink:0" alt="メイド">`;
+}
+
+function teaSetSVG(tea,sweets){
+  const tc=tea?tea.cup:"#c8904a", liq=tea?tea.col:"#c8904a";
+  const sc={scone:"#e8d4a0",macaron:"#f4b0c0",financier:"#d4a840",choco:"#5a3020",tart:"#e8a060",cookie:"#d4a060",shortcake:"#f8d0d0"};
+  const pot=`
+    <ellipse cx="100" cy="80" rx="46" ry="38" fill="white" stroke="${tc}" stroke-width="2"/>
+    <ellipse cx="100" cy="80" rx="38" ry="30" fill="${liq}" opacity="0.12"/>
+    <path d="M54 70 Q38 76 40 88 Q42 98 54 95" stroke="${tc}" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <path d="M146 66 Q160 60 162 74 Q164 88 148 86" stroke="${tc}" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <ellipse cx="100" cy="46" rx="20" ry="8" fill="white" stroke="${tc}" stroke-width="1.5"/>
+    <circle cx="100" cy="40" r="5" fill="${tc}"/>
+    <ellipse cx="100" cy="80" rx="28" ry="20" fill="none" stroke="${tc}" stroke-width="0.8" opacity="0.3"/>`;
+  const cup=`
+    <path d="M178 90 Q178 126 198 126 L242 126 Q262 126 262 90 Z" fill="white" stroke="${tc}" stroke-width="1.5"/>
+    <ellipse cx="220" cy="90" rx="42" ry="10" fill="white" stroke="${tc}" stroke-width="1.5"/>
+    <ellipse cx="220" cy="93" rx="35" ry="7" fill="${liq}" opacity="0.55"/>
+    <path d="M260 98 Q275 98 275 112 Q275 126 260 124" stroke="${tc}" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <ellipse cx="220" cy="126" rx="47" ry="6" fill="#f0ebe0" stroke="${tc}" stroke-width="1"/>
+    <path d="M188 108 Q220 116 252 108" stroke="${tc}" stroke-width="0.8" fill="none" opacity="0.4"/>`;
+  let stand=`
+    <line x1="55"  y1="162" x2="245" y2="162" stroke="${tc}" stroke-width="1.5" opacity="0.5"/>
+    <line x1="150" y1="162" x2="150" y2="222" stroke="${tc}" stroke-width="2"/>
+    <line x1="75"  y1="202" x2="225" y2="202" stroke="${tc}" stroke-width="1.5" opacity="0.5"/>
+    <line x1="95"  y1="242" x2="205" y2="242" stroke="${tc}" stroke-width="1.5" opacity="0.4"/>`;
+  const pos=[[90,157],[150,157],[210,157],[100,198],[200,198],[150,238]];
+  sweets.forEach((sw,i)=>{
+    if(i>=pos.length)return;
+    const[sx,sy]=pos[i];
+    const col=sc[sw.id]||"#e0c080";
+    stand+=sweetSVG(sw.id,sx,sy,col);
+  });
+  return`<svg viewBox="0 0 300 260" width="100%" xmlns="http://www.w3.org/2000/svg">
+    <rect width="300" height="260" fill="#fdf8f0" rx="12"/>
+    <pattern id="dp" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="10" cy="10" r="1.2" fill="${tc}" opacity="0.12"/></pattern>
+    <rect width="300" height="260" fill="url(#dp)" rx="12"/>
+    ${pot}${cup}${stand}
+    <path d="M0 248 Q150 238 300 248 L300 260 L0 260Z" fill="#f0e8d8" opacity="0.5"/>
+  </svg>`;
+}
+
+function sweetSVG(id,cx,cy,col){
+  switch(id){
+    case"scone":    return`<ellipse cx="${cx}" cy="${cy}" rx="14" ry="10" fill="${col}" stroke="#c8a060" stroke-width="1"/><path d="M${cx-10} ${cy} Q${cx} ${cy-6} ${cx+10} ${cy}" fill="#e8c080" opacity="0.5"/>`;
+    case"macaron":  return`<ellipse cx="${cx}" cy="${cy-4}" rx="12" ry="7" fill="#f4b0c0" stroke="#d08090" stroke-width="1"/><rect x="${cx-11}" y="${cy-1}" width="22" height="4" fill="#ffe0e8"/><ellipse cx="${cx}" cy="${cy+3}" rx="12" ry="7" fill="#f4b0c0" stroke="#d08090" stroke-width="1"/>`;
+    case"financier":return`<rect x="${cx-13}" y="${cy-8}" width="26" height="16" rx="4" fill="${col}" stroke="#b08030" stroke-width="1"/><rect x="${cx-10}" y="${cy-5}" width="20" height="3" rx="1" fill="#e8c840" opacity="0.4"/>`;
+    case"choco":    return`<rect x="${cx-12}" y="${cy-10}" width="24" height="20" rx="3" fill="${col}" stroke="#3a1a10" stroke-width="1"/><path d="M${cx-8} ${cy-4} L${cx+8} ${cy-4}" stroke="#7a4030" stroke-width="1" opacity="0.5"/><path d="M${cx} ${cy-10} L${cx} ${cy+10}" stroke="#7a4030" stroke-width="1" opacity="0.5"/>`;
+    case"tart":     return`<ellipse cx="${cx}" cy="${cy}" rx="14" ry="10" fill="#d4a060" stroke="#b08040" stroke-width="1"/><ellipse cx="${cx}" cy="${cy-2}" rx="11" ry="7" fill="#e8c880"/><circle cx="${cx-4}" cy="${cy-2}" r="3" fill="#e05040" opacity="0.9"/><circle cx="${cx+4}" cy="${cy-3}" r="2.5" fill="#40a040" opacity="0.9"/><circle cx="${cx}" cy="${cy+1}" r="2" fill="#e0a030" opacity="0.9"/>`;
+    case"cookie":   return`<ellipse cx="${cx}" cy="${cy}" rx="13" ry="11" fill="${col}" stroke="#b08040" stroke-width="1"/><circle cx="${cx-4}" cy="${cy-2}" r="2" fill="#5a3010" opacity="0.6"/><circle cx="${cx+3}" cy="${cy+2}" r="1.5" fill="#5a3010" opacity="0.6"/><circle cx="${cx+1}" cy="${cy-3}" r="1.5" fill="#5a3010" opacity="0.6"/>`;
+    case"shortcake":return`<rect x="${cx-13}" y="${cy-10}" width="26" height="8" rx="2" fill="#f8e0a0"/><rect x="${cx-13}" y="${cy-4}" width="26" height="14" rx="3" fill="#f8d0d0" stroke="#e09090" stroke-width="1"/><rect x="${cx-13}" y="${cy-4}" width="26" height="6" rx="2" fill="white" opacity="0.7"/><circle cx="${cx-4}" cy="${cy-6}" r="3" fill="#e04060"/><circle cx="${cx+5}" cy="${cy-5}" r="2.5" fill="#e04060"/>`;
+    default:        return`<ellipse cx="${cx}" cy="${cy}" rx="12" ry="9" fill="${col}"/>`;
+  }
+}
+
+/* ===================== 描画 ===================== */
+const WRAP=document.getElementById("wrap");
+
+function render(){
+  const isNight=slot.bk.length===0;
+  const availBk=TEAS.black.filter(t=>slot.bk.includes(t.id));
+  const availHb=TEAS.herb.filter(t=>slot.hb.includes(t.id));
+  const list=cat==="black"?availBk:availHb;
+
+  const speech=step===0
+    ?`本日は${slot.lbl}でございます。<br>どのようなお茶をご所望でしょうか、お嬢様？`
+    :step===1
+    ?`素晴らしいご選択です。<br>お菓子をお選びください。最大${MAX}種まで。`
+    :`お待たせいたしました。<br>本日のティーセットでございます✨`;
+
+  let html=`
+    <div class="g-header">
+      <div class="h-en">Afternoon Tea Experience</div>
+      <div class="h-ja">お嬢様のティータイム</div>
+      <div class="h-badge">${slot.lbl} · ${slot.en}</div>
+    </div>
+    <div class="maid-area fu">
+      ${maidSVG()}
+      <div class="speech">
+        <div class="speech-name">— Marie —</div>
+        ${speech}
+      </div>
+    </div>
+    <div class="steps">
+      <div class="dot ${step>0?'done':step===0?'active':''}"></div>
+      <div class="dot ${step>1?'done':step===1?'active':''}"></div>
+      <div class="dot ${step===2?'active':''}"></div>
+    </div>`;
+
+  /* ---- ステップ0：茶葉選択 ---- */
+  if(step===0){
+    html+=`<div class="sec-title fu"><em>✦</em> 茶葉をお選びください <em>✦</em></div>`;
+    if(!isNight){
+      html+=`<div class="cat-tabs fu">
+        <button class="cat-tab ${cat==="black"?"on":""}" data-act="cat" data-val="black">🍵 紅茶<br><small>${availBk.length}種</small></button>
+        <button class="cat-tab ${cat==="herb"?"on":""}"  data-act="cat" data-val="herb">🌿 ハーブティー<br><small>${availHb.length}種</small></button>
+      </div>`;
+    }
+    html+=`<div class="grid fu">`;
+    list.forEach(t=>{
+      html+=`<div class="card ${selTea?.id===t.id?"on":""}" data-act="tea" data-id="${t.id}">
+        <div>${cupSVG(t.cup,36)}</div>
+        <div class="c-name">${t.name}</div>
+        <div class="c-orig">📍 ${t.orig}</div>
+        <div class="c-desc">${t.desc}</div>
+      </div>`;
+    });
+    html+=`</div>
+      <button class="btn-main" data-act="next" ${!selTea?"disabled":""}>次へ — スイーツを選ぶ</button>`;
+  }
+
+  /* ---- ステップ1：スイーツ選択 ---- */
+  if(step===1){
+    html+=`<div class="sec-title fu"><em>✦</em> お菓子をお選びください <em>✦</em>
+      <div style="font-size:10px;color:var(--sub);margin-top:4px">最大${MAX}種まで選べます</div>
+    </div><div class="grid fu">`;
+    SWEETS.forEach(s=>{
+      const chosen=selSweets.find(x=>x.id===s.id);
+      const locked=selSweets.length>=MAX&&!chosen;
+      html+=`<div class="card ${chosen?"on":""} ${locked?"dim":""}" data-act="sweet" data-id="${s.id}">
+        <div style="font-size:28px">${s.icon}</div>
+        <div class="c-name">${s.name}</div>
+        <div class="c-desc">${s.desc}</div>
+      </div>`;
+    });
+    html+=`</div>
+      <div class="cnt-msg">${selSweets.length} / ${MAX} 選択中</div>
+      <button class="btn-main" data-act="next" ${selSweets.length===0?"disabled":""}>ティーセットを完成させる</button>
+      <button class="btn-sub" data-act="prev">← 茶葉を選び直す</button>`;
+  }
+
+  /* ---- ステップ2：完成 ---- */
+  if(step===2){
+    html+=`<div class="teaset-box fu">
+      <div class="teaset-lbl">〜 本日のティーセット 〜</div>
+      ${teaSetSVG(selTea,selSweets)}
+    </div>
+    <div class="res-detail fu">
+      <div class="d-row">
+        <div>${cupSVG(selTea.cup,26)}</div>
+        <div><div class="d-name">${selTea.name}</div>
+          <div class="d-info">📍 ${selTea.orig}<br>${selTea.desc}</div>
+        </div>
+      </div>
+      <div class="orn">· · ·</div>
+      ${selSweets.map(s=>`
+        <div class="d-row">
+          <div style="font-size:22px">${s.icon}</div>
+          <div><div class="d-name">${s.name}</div><div class="d-info">${s.desc}</div></div>
+        </div>`).join("")}
+    </div>
+    <button class="btn-main" data-act="reset">もう一度ティータイムを楽しむ</button>`;
+  }
+
+  WRAP.innerHTML=html;
+}
+
+/* ===================== イベント（click と touchend 両対応） ===================== */
+let lastTouch=0;
+function handleAct(e){
+  // touchend後のclick二重発火を防ぐ
+  if(e.type==="click" && Date.now()-lastTouch<400) return;
+  if(e.type==="touchend") lastTouch=Date.now();
+
+  const el=e.target.closest("[data-act]");
+  if(!el) return;
+  e.preventDefault();
+  e.stopPropagation();
+
+  const act=el.dataset.act;
+
+  if(act==="cat"){
+    cat=el.dataset.val; selTea=null; render(); return;
+  }
+  if(act==="tea"){
+    const list=cat==="black"?TEAS.black:TEAS.herb;
+    selTea=list.find(t=>t.id===el.dataset.id)||null; render(); return;
+  }
+  if(act==="sweet"){
+    if(el.classList.contains("dim")) return;
+    const sw=SWEETS.find(s=>s.id===el.dataset.id);
+    const idx=selSweets.findIndex(s=>s.id===el.dataset.id);
+    if(idx>=0) selSweets.splice(idx,1);
+    else if(selSweets.length<MAX) selSweets.push(sw);
+    render(); return;
+  }
+  if(act==="next"){
+    if(step===0&&!selTea) return;
+    if(step===1&&selSweets.length===0) return;
+    step++; render(); window.scrollTo({top:0,behavior:"smooth"}); return;
+  }
+  if(act==="prev"){
+    step--; render(); window.scrollTo({top:0,behavior:"smooth"}); return;
+  }
+  if(act==="reset"){
+    step=0; selTea=null; selSweets=[]; cat="black";
+    render(); window.scrollTo({top:0,behavior:"smooth"}); return;
+  }
+}
+
+document.addEventListener("click",   handleAct, true);
+document.addEventListener("touchend", handleAct, {passive:false, capture:true});
+
+render();
+</script>
+</body>
+</html>
