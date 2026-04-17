@@ -9,40 +9,49 @@
         canvas { display: block; }
         #ui-container { position: absolute; top: 10px; left: 10px; color: #ff69b4; font-size: 16px; font-weight: bold; pointer-events: none; text-shadow: 1px 1px white; z-index: 5;}
         
-        /* ボタン共通設定 */
-        .btn { position: absolute; padding: 12px 20px; font-size: 18px; font-weight: bold; color: white; background: #ff69b4; border: none; border-radius: 25px; cursor: pointer; box-shadow: 0 4px #d85091; transition: 0.1s; z-index: 10; touch-action: manipulation; }
-        .btn:active { transform: translateY(2px); box-shadow: 0 1px #d85091; }
+        .btn { 
+            position: absolute; 
+            padding: 12px 20px; 
+            font-size: 18px; 
+            font-weight: bold; 
+            color: white; 
+            background: #ff69b4; 
+            border: none; 
+            border-radius: 25px; 
+            cursor: pointer; 
+            box-shadow: 0 4px #d85091; 
+            transition: 0.1s; 
+            z-index: 100; /* ボタンを最前面に */
+            touch-action: manipulation; 
+        }
+        .btn:active { transform: translateY(2px) translateX(-50%); box-shadow: 0 1px #d85091; }
         
-        /* 右上のコントロール */
-        #muteBtn { top: 10px; right: 10px; width: 44px; height: 44px; padding: 0; font-size: 20px; background: #ffb6c1; display: flex; align-items: center; justify-content: center; }
-        #pauseBtn { top: 10px; right: 60px; font-size: 14px; background: #ffb6c1; width: auto; display: none; }
+        #muteBtn { top: 10px; right: 10px; width: 44px; height: 44px; padding: 0; font-size: 20px; background: #ffb6c1; display: flex; align-items: center; justify-content: center; transform: none; }
+        #pauseBtn { top: 10px; right: 60px; font-size: 14px; background: #ffb6c1; width: auto; display: none; transform: none; }
         
-        /* 中央メニュー */
         #startBtn { top: 55%; left: 50%; transform: translate(-50%, -50%); padding: 18px 36px; font-size: 22px; width: 200px; }
         
-        /* 難易度ボタン（重なり防止のため縦並びに変更） */
         .difficulty-btn { left: 50%; transform: translateX(-50%); width: 180px; display: none; }
-        #easyBtn { top: 50%; background: #98fb98; box-shadow: 0 4px #6ac46a;}
-        #normalBtn { top: 62%; background: #ffd700; box-shadow: 0 4px #b89b00;}
-        #hardBtn { top: 74%; background: #ff4500; box-shadow: 0 4px #b33000;}
+        #easyBtn { top: 48%; background: #98fb98; box-shadow: 0 4px #6ac46a;}
+        #normalBtn { top: 60%; background: #ffd700; box-shadow: 0 4px #b89b00;}
+        #hardBtn { top: 72%; background: #ff4500; box-shadow: 0 4px #b33000;}
         
         #retryBtn { top: 65%; left: 50%; transform: translate(-50%, -50%); display: none; width: 180px; }
         #item-timer { color: #ff1493; font-size: 14px; font-weight: bold; display: none; }
 
-        /* タイトルのレスポンシブ対応 */
         .title-text {
             position: absolute;
             width: 90%;
             left: 50%;
-            top: 30%;
+            top: 25%;
             transform: translate(-50%, -50%);
             color: #ff69b4;
             text-align: center;
             font-weight: bold;
-            font-size: 7vw; /* 画面幅に合わせてサイズ変更 */
-            max-size: 32px;
-            pointer-events: none;
+            font-size: 7.5vw;
+            pointer-events: none; /* 文字がボタンの邪魔をしないように */
             z-index: 5;
+            text-shadow: 2px 2px white;
         }
     </style>
 </head>
@@ -91,7 +100,6 @@
         function resize() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            // タイトルのフォントサイズ制限（PCでも大きくなりすぎないように）
             const fontSize = Math.min(window.innerWidth * 0.08, 32);
             ui.title.style.fontSize = fontSize + "px";
         }
@@ -114,7 +122,6 @@
         };
         Object.values(bgm).forEach(audio => { audio.loop = true; audio.volume = 0.5; });
 
-        // 初期設定をミュートに
         let isMuted = true; 
         let currentBgm = null;
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -178,83 +185,39 @@
             if (!isMuted && currentBgm) currentBgm.play().catch(()=>{});
         }
 
-        buttons.mute.onclick = (e) => {
+        // --- ボタンイベントの修正 ---
+        buttons.mute.addEventListener('pointerdown', (e) => {
             e.stopPropagation();
             isMuted = !isMuted;
             buttons.mute.innerText = isMuted ? '🔇' : '🔊';
             if (isMuted) { if (currentBgm) currentBgm.pause(); }
-            else { 
-                audioCtx.resume();
-                if (currentBgm) currentBgm.play().catch(()=>{}); 
-            }
-        };
+            else { audioCtx.resume(); if (currentBgm) currentBgm.play().catch(()=>{}); }
+        });
 
-        buttons.start.onclick = () => {
+        buttons.start.addEventListener('pointerdown', (e) => {
+            e.stopPropagation();
             buttons.start.style.display = 'none';
             buttons.easy.style.display = buttons.normal.style.display = buttons.hard.style.display = 'block';
             switchBgm(bgm.opening);
-        };
+        });
 
         function startGame(difficulty) {
             currentConfig = configs[difficulty];
             ui.diff.innerText = `Course: ${currentConfig.name}`;
             buttons.easy.style.display = buttons.normal.style.display = buttons.hard.style.display = 'none';
             buttons.pause.style.display = 'block';
-            ui.title.style.display = 'none'; // ゲーム開始時にタイトルを消す
+            ui.title.style.display = 'none';
             gameState = 'PLAY';
             switchBgm(currentConfig.bgm);
         }
-        ['easy', 'normal', 'hard'].forEach(d => buttons[d].onclick = () => startGame(d));
+        ['easy', 'normal', 'hard'].forEach(d => {
+            buttons[d].addEventListener('pointerdown', (e) => {
+                e.stopPropagation();
+                startGame(d);
+            });
+        });
 
-        buttons.pause.onclick = () => {
+        buttons.pause.addEventListener('pointerdown', (e) => {
+            e.stopPropagation();
             if (gameState === 'PLAY') { gameState = 'PAUSE'; buttons.pause.innerText = 'RESUME'; if(currentBgm) currentBgm.pause(); }
             else { gameState = 'PLAY'; buttons.pause.innerText = 'PAUSE'; if(!isMuted && currentBgm) currentBgm.play(); }
-        };
-        buttons.retry.onclick = () => location.reload();
-
-        function loop() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            const squish = 1 + Math.sin(frame * 0.15) * 0.1;
-
-            if (gameState === 'TITLE') {
-                decorCandies.forEach(c => {
-                    c.y -= 0.5; c.a += c.sp; if(c.y < -c.s) c.y = canvas.height + c.s;
-                    ctx.save(); ctx.globalAlpha = 0.2; ctx.translate(c.x + Math.sin(c.a)*20, c.y); ctx.rotate(c.a);
-                    ctx.drawImage(img.candy, -c.s/2, -c.s/2, c.s, c.s); ctx.restore();
-                });
-            } else if (gameState === 'PLAY') {
-                update();
-                draw();
-            } else if (gameState === 'PAUSE') {
-                draw();
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.5)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-            } else {
-                drawResult();
-            }
-
-            frame++;
-            requestAnimationFrame(loop);
-        }
-
-        function update() {
-            if (powerUpTimer > 0) {
-                powerUpTimer--;
-                ui.timer.style.display = 'block';
-                ui.timeLeft.innerText = Math.ceil(powerUpTimer / 60);
-                if (powerUpTimer <= 0) ui.timer.style.display = 'none';
-            }
-            if (frame % 8 === 0 && isPressing) {
-                const b = { x: player.x, y: player.y - 40, width: 30, height: 30 };
-                bullets.push({ ...b, vx: 0, vy: -12 });
-                if (powerUpTimer > 0) { bullets.push({ ...b, vx: -4, vy: -11 }, { ...b, vx: 4, vy: -11 }); }
-            }
-            bullets.forEach((b, i) => {
-                b.x += b.vx; b.y += b.vy;
-                if (b.y < -30 || b.x < -30 || b.x > canvas.width + 30) bullets.splice(i, 1);
-            });
-            if (frame % 500 === 0 && Math.random() < 0.6) items.push({ x: Math.random() * (canvas.width - 50) + 25, y: -50, width: 60, height: 60 });
-            items.forEach((it, i) => {
-                it.y += 2.5; it.x += Math.sin(frame * 0.05) * 3;
-                if (Math.hypot(it.x - player.x, it.y - player.y) < 55) { items.splice(i, 1); powerUpTimer = 600; }
-            });
-            if (score < 1000 && frame % currentConfig.spawnRate === 0) enemies.push({ x: Math.random() * (canvas.width - 40) + 20, y: -50, width: 65, height: 65, img: img.veget
