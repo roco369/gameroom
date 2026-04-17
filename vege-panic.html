@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>ぷにぷに！ベジ・パニック DX</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #fff0f5; touch-action: none; font-family: 'Hiragino Kaku Gothic ProN', sans-serif; }
+        canvas { display: block; }
+        #ui-container { position: absolute; top: 10px; left: 10px; color: #ff69b4; font-size: 18px; font-weight: bold; pointer-events: none; text-shadow: 1px 1px white; z-index: 5;}
+        .btn { position: absolute; padding: 10px 20px; font-size: 18px; font-weight: bold; color: white; background: #ff69b4; border: none; border-radius: 20px; cursor: pointer; box-shadow: 0 4px #d85091; transition: 0.1s; z-index: 10;}
+        .btn:active { transform: translateY(3px); box-shadow: 0 1px #d85091; }
+        
+        #muteBtn { top: 10px; right: 10px; width: 44px; height: 44px; padding: 0; font-size: 20px; background: #ffb6c1; display: flex; align-items: center; justify-content: center; }
+        #pauseBtn { top: 10px; right: 65px; font-size: 14px; background: #ffb6c1; width: auto; display: none; }
+        #startBtn { top: 55%; left: 50%; transform: translate(-50%, -50%); padding: 20px 40px; font-size: 24px; }
+        
+        .difficulty-btn { position: absolute; top: 60%; transform: translateX(-50%); width: 120px; display: none; }
+        #easyBtn { left: 30%; background: #98fb98; box-shadow: 0 4px #6ac46a;}
+        #normalBtn { left: 50%; background: #ffd700; box-shadow: 0 4px #b89b00;}
+        #hardBtn { left: 70%; background: #ff4500; box-shadow: 0 4px #b33000;}
+        
+        #retryBtn { top: 65%; left: 50%; transform: translate(-50%, -50%); display: none; }
+        #item-timer { color: #ff1493; font-size: 16px; font-weight: bold; display: none; }
+    </style>
+</head>
+<body>
+    <div id="ui-container">
+        Score: <span id="score">0</span><br>
+        High Score: <span id="bestScore">0</span><br>
+        <span id="difficulty-display">Course: ---</span><br>
+        <span id="item-timer">Power Up: <span id="time-left">0</span>s</span>
+    </div>
+    
+    <button id="muteBtn" class="btn">🔊</button>
+    <button id="pauseBtn" class="btn">PAUSE</button>
+    <button id="startBtn" class="btn">START 🐹</button>
+    
+    <button id="easyBtn" class="difficulty-btn btn">初級 🍅</button>
+    <button id="normalBtn" class="difficulty-btn btn">中級 🥬</button>
+    <button id="hardBtn" class="difficulty-btn btn">上級 🍄</button>
+    <button id="retryBtn" class="btn">もういっかい！</button>
+    
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const ui = {
+            score: document.getElementById('score'),
+            best: document.getElementById('bestScore'),
+            diff: document.getElementById('difficulty-display'),
+            timer: document.getElementById('item-timer'),
+            timeLeft: document.getElementById('time-left')
+        };
+        const buttons = {
+            mute: document.getElementById('muteBtn'),
+            pause: document.getElementById('pauseBtn'),
+            start: document.getElementById('startBtn'),
+            easy: document.getElementById('easyBtn'),
+            normal: document.getElementById('normalBtn'),
+            hard: document.getElementById('hardBtn'),
+            retry: document.getElementById('retryBtn')
+        };
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        function loadImage(src) { const img = new Image(); img.src = src; return img; }
+        const img = {
+            hamu: loadImage('HAMU.png'), candy: loadImage('CANDY.png'),
+            vegetables: ['tamanegi.png','piman.png','ninzin.png','nasu.png','jaga.png'].map(loadImage),
+            bosses: { easy: loadImage('tomatoKing.png'), normal: loadImage('letasuKing.png'), hard: loadImage('kinokoKing.png') },
+            hana: loadImage('hana.png')
+        };
+
+        const bgm = {
+            opening: new Audio('opning.mp3'),
+            easy: new Audio('Beginner.mp3'),
+            normal: new Audio('intermediate.mp3'),
+            hard: new Audio('advanced.mp3')
+        };
+        Object.values(bgm).forEach(audio => { audio.loop = true; audio.volume = 0.5; });
+
+        let isMuted = false;
+        let currentBgm = null;
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playSE(type) {
+            if (isMuted) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            const now = audioCtx.currentTime;
+            if (type === 'hit') {
+                osc.type = 'sine'; osc.frequency.setValueAtTime(600, now);
+                osc.frequency.exponentialRampToValueAtTime(100, now + 0.1);
+                gain.gain.setValueAtTime(0.3, now); gain.gain.linearRampToValueAtTime(0, now + 0.1);
+                osc.start(); osc.stop(now + 0.1);
+            } else if (type === 'clear') {
+                [440, 554, 659, 880].forEach((freq, i) => {
+                    const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
+                    o.connect(g); g.connect(audioCtx.destination);
+                    o.frequency.setValueAtTime(freq, now + i * 0.1);
+                    g.gain.setValueAtTime(0.1, now + i * 0.1);
+                    g.gain.linearRampToValueAtTime(0, now + i * 0.1 + 0.5);
+                    o.start(now + i * 0.1); o.stop(now + i * 0.1 + 0.5);
+                });
+            }
+        }
+
+        let score = 0;
+        let bestScore = localStorage.getItem('bestScore') || 0;
+        ui.best.innerText = bestScore;
+        let gameState = 'TITLE';
+        let currentConfig = null;
+        let frame = 0;
+        let powerUpTimer = 0;
+        const player = { x: canvas.width / 2, y: canvas.height - 100, width: 80, height: 80 };
+        const bullets = [], enemies = [], items = [];
+        let boss = null;
+        
+        const decorCandies = Array.from({length: 8}, () => ({
+            x: Math.random() * canvas.width, y: Math.random() * canvas.height,
+            s: 40 + Math.random() * 40, a: Math.random() * Math.PI * 2, sp: 0.02 + Math.random() * 0.02
+        }));
+
+        const configs = {
+            easy: { name: '初級', enemySpeed: 3, spawnRate: 50, bossHp: 50, bossImg: img.bosses.easy, bossSize: 180, bgm: bgm.easy },
+            normal: { name: '中級', enemySpeed: 5, spawnRate: 30, bossHp: 100, bossImg: img.bosses.normal, bossSize: 220, bgm: bgm.normal },
+            hard: { name: '上級', enemySpeed: 8, spawnRate: 15, bossHp: 200, bossImg: img.bosses.hard, bossSize: 260, bgm: bgm.hard }
+        };
+
+        const handleMove = (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = (e.touches ? e.touches[0].clientX : e.clientX);
+            const clientY = (e.touches ? e.touches[0].clientY : e.clientY);
+            player.x = clientX - rect.left;
+            player.y = clientY - rect.top - 40;
+        };
+
+        function switchBgm(newBgm) {
+            if (currentBgm) currentBgm.pause();
+            currentBgm = newBgm;
+            if (!isMuted && currentBgm) currentBgm.play().catch(()=>{});
+        }
+
+        buttons.mute.onclick = (e) => {
+            e.stopPropagation();
+            isMuted = !isMuted;
+            buttons.mute.innerText = isMuted ? '🔇' : '🔊';
+            if (isMuted) { if (currentBgm) currentBgm.pause(); }
+            else { if (currentBgm) currentBgm.play(); audioCtx.resume(); }
+        };
+
+        buttons.start.onclick = () => {
+            audioCtx.resume();
+            buttons.start.style.display = 'none';
+            buttons.easy.style.display = buttons.normal.style.display = buttons.hard.style.display = 'block';
+            switchBgm(bgm.opening);
+        };
+
+        function startGame(difficulty) {
+            currentConfig = configs[difficulty];
+            ui.diff.innerText = `Course: ${currentConfig.name}`;
+            buttons.easy.style.display = buttons.normal.style.display = buttons.hard.style.display = 'none';
+            buttons.pause.style.display = 'block';
+            gameState = 'PLAY';
+            switchBgm(currentConfig.bgm);
+        }
+        ['easy', 'normal', 'hard'].forEach(d => buttons[d].onclick = () => startGame(d));
+
+        buttons.pause.onclick = () => {
+            if (gameState === 'PLAY') { gameState = 'PAUSE'; buttons.pause.innerText = 'RESUME'; currentBgm.pause(); }
+            else { gameState = 'PLAY'; buttons.pause.innerText = 'PAUSE'; if(!isMuted) currentBgm.play(); }
+        };
+        buttons.retry.onclick = () => location.reload();
+
+        function loop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const squish = 1 + Math.sin(frame * 0.15) * 0.1;
+
+            if (gameState === 'TITLE') {
+                decorCandies.forEach(c => {
+                    c.y -= 0.5; c.a += c.sp; if(c.y < -c.s) c.y = canvas.height + c.s;
+                    ctx.save(); ctx.globalAlpha = 0.2; ctx.translate(c.x + Math.sin(c.a)*20, c.y); ctx.rotate(c.a);
+                    ctx.drawImage(img.candy, -c.s/2, -c.s/2, c.s, c.s); ctx.restore();
+                });
+                ctx.fillStyle = '#ff69b4'; ctx.textAlign = 'center'; ctx.font = 'bold 32px sans-serif';
+                ctx.fillText('ぷにぷに！ベジ・パニック DX', canvas.width/2, canvas.height/2 - 120);
+                if(buttons.easy.style.display === 'block') {
+                    ctx.font = '20px sans-serif'; ctx.fillText('コースを選んでね 🐹', canvas.width/2, canvas.height/2 - 80);
+                }
+                // ★ここからハムスター描画コードを削除しました
+
+            } else if (gameState === 'PLAY') {
+                update();
+                draw();
+            } else if (gameState === 'PAUSE') {
+                draw();
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.5)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            } else {
+                drawResult();
+            }
+
+            frame++;
+            requestAnimationFrame(loop);
+        }
+
+        function update() {
+            if (powerUpTimer > 0) {
+                powerUpTimer--;
+                ui.timer.style.display = 'block';
+                ui.timeLeft.innerText = Math.ceil(powerUpTimer / 60);
+                if (powerUpTimer <= 0) ui.timer.style.display = 'none';
+            }
+            if (frame % 8 === 0 && isPressing) {
+                const b = { x: player.x, y: player.y - 40, width: 30, height: 30 };
+                bullets.push({ ...b, vx: 0, vy: -12 });
+                if (powerUpTimer > 0) { bullets.push({ ...b, vx: -4, vy: -11 }, { ...b, vx: 4, vy: -11 }); }
+            }
+            bullets.forEach((b, i) => {
+                b.x += b.vx; b.y += b.vy;
+                if (b.y < -30 || b.x < -30 || b.x > canvas.width + 30) bullets.splice(i, 1);
+            });
+            if (frame % 500 === 0 && Math.random() < 0.6) items.push({ x: Math.random() * (canvas.width - 50) + 25, y: -50, width: 60, height: 60 });
+            items.forEach((it, i) => {
+                it.y += 2.5; it.x += Math.sin(frame * 0.05) * 3;
+                if (Math.hypot(it.x - player.x, it.y - player.y) < 55) { items.splice(i, 1); powerUpTimer = 600; }
+            });
+            if (score < 1000 && frame % currentConfig.spawnRate === 0) enemies.push({ x: Math.random() * (canvas.width - 40) + 20, y: -50, width: 65, height: 65, img: img.vegetables[Math.floor(Math.random() * 5)] });
+            enemies.forEach((e, i) => {
+                e.y += currentConfig.enemySpeed;
+                if (Math.hypot(e.x - player.x, e.y - player.y) < 55) endGame('GAMEOVER');
+                bullets.forEach((b, bi) => {
+                    if (Math.hypot(e.x - b.x, e.y - b.y) < 45) { playSE('hit'); enemies.splice(i, 1); bullets.splice(bi, 1); updateScore(10); }
+                });
+            });
+            if (score >= 1000 && !boss) boss = { x: canvas.width/2, y: -150, width: currentConfig.bossSize, height: currentConfig.bossSize, hp: currentConfig.bossHp, maxHp: currentConfig.bossHp, img: currentConfig.bossImg };
+            if (boss) {
+                if (boss.y < boss.height/2 + 50) boss.y += 1;
+                boss.x = canvas.width/2 + Math.sin(frame * 0.04) * (canvas.width/2 - boss.width/2 - 20);
+                bullets.forEach((b, bi) => {
+                    if (Math.hypot(boss.x - b.x, boss.y - b.y) < boss.width/2 + 20) { playSE('hit'); boss.hp--; bullets.splice(bi, 1); if (boss.hp <= 0) { playSE('clear'); endGame('CLEAR'); } }
+                });
+            }
+        }
+
+        function updateScore(pts) { score += pts; ui.score.innerText = score; if (score > bestScore) { bestScore = score; ui.best.innerText = bestScore; localStorage.setItem('bestScore', bestScore); } }
+
+        function draw() {
+            const squish = 1 + Math.sin(frame * 0.15) * 0.1;
+            bullets.forEach(b => ctx.drawImage(img.candy, b.x - b.width/2, b.y - b.height/2, b.width, b.height));
+            items.forEach(it => ctx.drawImage(img.hana, it.x - it.width/2, it.y - it.height/2, it.width, it.height));
+            enemies.forEach(e => drawPuniPuni(e.img, e.x, e.y, e.width, e.height, squish, true));
+            drawPuniPuni(img.hamu, player.x, player.y, player.width, player.height, squish);
+            if (boss) {
+                drawPuniPuni(boss.img, boss.x, boss.y, boss.width, boss.height, squish, true);
+                ctx.fillStyle = '#eee'; ctx.fillRect(boss.x - boss.width/2, boss.y - boss.height/2 - 30, boss.width, 12);
+                ctx.fillStyle = '#ff1493'; ctx.fillRect(boss.x - boss.width/2, boss.y - boss.height/2 - 30, (boss.hp/boss.maxHp)*boss.width, 12);
+            }
+        }
+
+        function drawPuniPuni(image, x, y, width, height, squish, reverse = false) {
+            ctx.save(); ctx.translate(x, y);
+            if (reverse) ctx.scale(2 - squish, squish); else ctx.scale(squish, 2 - squish);
+            ctx.drawImage(image, -width/2, -height/2, width, height); ctx.restore();
+        }
+
+        function endGame(state) { gameState = state; buttons.retry.style.display = 'block'; buttons.pause.style.display = 'none'; }
+
+        function drawResult() {
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.textAlign = 'center'; ctx.fillStyle = '#ff69b4'; ctx.font = 'bold 36px sans-serif';
+            ctx.fillText(gameState === 'GAMEOVER' ? 'おなかいっぱい…' : `✨ ${currentConfig.name} 完食！ ✨`, canvas.width/2, canvas.height/2 - 20);
+        }
+
+        let isPressing = false;
+        window.addEventListener('mousedown', (e) => { isPressing = true; handleMove(e); });
+        window.addEventListener('mouseup', () => isPressing = false);
+        window.addEventListener('mousemove', (e) => handleMove(e));
+        window.addEventListener('touchstart', (e) => { isPressing = true; handleMove(e); });
+        window.addEventListener('touchend', () => isPressing = false);
+        window.addEventListener('touchmove', (e) => { handleMove(e); e.preventDefault(); }, {passive: false});
+
+        loop();
+    </script>
+</body>
+</html>
