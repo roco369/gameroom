@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>ぷにぷに！ベジ・パニック DX</title>
+    <title>ぷにぷに！ベジ・パニック</title>
     <style>
         body { margin: 0; overflow: hidden; background: #fff0f5; touch-action: none; font-family: 'Hiragino Kaku Gothic ProN', sans-serif; }
         canvas { display: block; }
@@ -14,11 +14,12 @@
             text-shadow: 1px 1px white; z-index: 20;
         }
         
-        /* タイトルサイズを適切に調整 */
+        /* タイトル改行とサイズ調整 */
         .title-text {
             position: absolute; width: 100%; left: 0; top: 20%;
             color: #ff69b4; text-align: center; font-weight: bold;
-            font-size: clamp(24px, 8vw, 40px); /* 最小24px, 最大40pxに制限 */
+            font-size: clamp(28px, 9vw, 44px); 
+            line-height: 1.3;
             pointer-events: none; z-index: 10; text-shadow: 2px 2px white;
         }
 
@@ -34,12 +35,12 @@
         #muteBtn { top: 10px; right: 10px; width: 44px; height: 44px; padding: 0; font-size: 20px; background: #ffb6c1; border-radius: 50%; }
         #pauseBtn { top: 10px; right: 65px; font-size: 14px; background: #ffb6c1; display: none; }
         
-        #startBtn { top: 55%; left: 50%; transform: translate(-50%, -50%); width: 220px; }
+        #startBtn { top: 60%; left: 50%; transform: translate(-50%, -50%); width: 220px; }
         
         .difficulty-btn { left: 50%; transform: translateX(-50%); width: 200px; display: none; }
-        #easyBtn { top: 45%; background: #98fb98; box-shadow: 0 4px #6ac46a;}
-        #normalBtn { top: 57%; background: #ffd700; box-shadow: 0 4px #b89b00;}
-        #hardBtn { top: 69%; background: #ff4500; box-shadow: 0 4px #b33000;}
+        #easyBtn { top: 48%; background: #98fb98; box-shadow: 0 4px #6ac46a;}
+        #normalBtn { top: 60%; background: #ffd700; box-shadow: 0 4px #b89b00;}
+        #hardBtn { top: 72%; background: #ff4500; box-shadow: 0 4px #b33000;}
         
         #retryBtn { top: 65%; left: 50%; transform: translate(-50%, -50%); display: none; width: 200px; }
         #item-timer { color: #ff1493; font-size: 14px; display: none; }
@@ -53,7 +54,7 @@
         <span id="item-timer">Power Up: <span id="time-left">0</span>s</span>
     </div>
     
-    <div id="titleDisplay" class="title-text">ぷにぷに！ベジ・パニック DX</div>
+    <div id="titleDisplay" class="title-text">ぷにぷに！<br>ベジ・パニック</div>
     
     <button id="muteBtn" class="btn">🔇</button>
     <button id="pauseBtn" class="btn">PAUSE</button>
@@ -69,14 +70,23 @@
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
+        
+        // 音声設定をセッション（ブラウザを閉じるまで）で維持
+        let isMuted = sessionStorage.getItem('isMuted') === null ? true : sessionStorage.getItem('isMuted') === 'true';
+
         const ui = {
             score: document.getElementById('score'),
             best: document.getElementById('bestScore'),
             diff: document.getElementById('difficulty-display'),
             timer: document.getElementById('item-timer'),
             timeLeft: document.getElementById('time-left'),
-            title: document.getElementById('titleDisplay')
+            title: document.getElementById('titleDisplay'),
+            mute: document.getElementById('muteBtn')
         };
+        
+        // ミュートボタンの初期表示反映
+        ui.mute.innerText = isMuted ? '🔇' : '🔊';
+
         const buttons = {
             mute: document.getElementById('muteBtn'),
             pause: document.getElementById('pauseBtn'),
@@ -110,7 +120,6 @@
         };
         Object.values(bgm).forEach(audio => { audio.loop = true; audio.volume = 0.5; });
 
-        let isMuted = true; 
         let currentBgm = null;
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
@@ -173,15 +182,16 @@
             if (!isMuted && currentBgm) currentBgm.play().catch(()=>{});
         }
 
-        // ボタンのクリック処理を確実に
         buttons.mute.onclick = (e) => {
             isMuted = !isMuted;
+            sessionStorage.setItem('isMuted', isMuted); // 設定を記憶
             buttons.mute.innerText = isMuted ? '🔇' : '🔊';
             if (isMuted) { if (currentBgm) currentBgm.pause(); }
             else { audioCtx.resume(); if (currentBgm) currentBgm.play().catch(()=>{}); }
         };
 
         buttons.start.onclick = () => {
+            audioCtx.resume();
             buttons.start.style.display = 'none';
             buttons.easy.style.display = buttons.normal.style.display = buttons.hard.style.display = 'block';
             switchBgm(bgm.opening);
@@ -204,12 +214,13 @@
             if (gameState === 'PLAY') { gameState = 'PAUSE'; buttons.pause.innerText = 'RESUME'; if(currentBgm) currentBgm.pause(); }
             else { gameState = 'PLAY'; buttons.pause.innerText = 'PAUSE'; if(!isMuted && currentBgm) currentBgm.play(); }
         };
-        buttons.retry.onclick = () => location.reload();
+        buttons.retry.onclick = () => {
+            // リトライ時はセッションのミュート設定を引き継いでリロード
+            location.reload();
+        };
 
         function loop() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            const squish = 1 + Math.sin(frame * 0.15) * 0.1;
-
             if (gameState === 'TITLE') {
                 decorCandies.forEach(c => {
                     c.y -= 0.5; c.a += c.sp; if(c.y < -c.s) c.y = canvas.height + c.s;
@@ -293,17 +304,20 @@
 
         function drawResult() {
             ctx.fillStyle = 'rgba(255, 255, 255, 0.8)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.textAlign = 'center'; ctx.fillStyle = '#ff69b4'; ctx.font = 'bold 36px sans-serif';
+            ctx.textAlign = 'center'; ctx.fillStyle = '#ff69b4'; ctx.font = 'bold 32px sans-serif';
             ctx.fillText(gameState === 'GAMEOVER' ? 'おなかいっぱい…' : `✨ ${currentConfig.name} 完食！ ✨`, canvas.width/2, canvas.height/2 - 20);
         }
 
         let isPressing = false;
-        canvas.addEventListener('mousedown', (e) => { isPressing = true; handleMove(e); });
-        canvas.addEventListener('touchstart', (e) => { isPressing = true; handleMove(e); e.preventDefault(); }, {passive: false});
+        // マウス移動だけでハムスターを動かす（クリック不要）
+        window.addEventListener('mousemove', (e) => { handleMove(e); });
+        window.addEventListener('mousedown', (e) => { isPressing = true; });
         window.addEventListener('mouseup', () => isPressing = false);
+        
+        // スマホ用タッチイベント
+        canvas.addEventListener('touchstart', (e) => { isPressing = true; handleMove(e); e.preventDefault(); }, {passive: false});
         window.addEventListener('touchend', () => isPressing = false);
-        window.addEventListener('mousemove', (e) => { if(isPressing) handleMove(e); });
-        window.addEventListener('touchmove', (e) => { if(isPressing) { handleMove(e); e.preventDefault(); } }, {passive: false});
+        window.addEventListener('touchmove', (e) => { handleMove(e); e.preventDefault(); }, {passive: false});
 
         loop();
     </script>
