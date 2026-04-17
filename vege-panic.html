@@ -70,9 +70,10 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         
-        // --- 音声設定の記憶（ここを強化） ---
+        // --- 音声設定の記憶 (teatime.html 方式) ---
+        // sessionStorage を使い、ブラウザを閉じるまで状態を維持
         const savedMute = sessionStorage.getItem('isMuted');
-        // 初回訪問（保存なし）なら true (ミュート)、保存があればそれに従う
+        // 初回（保存なし）なら true(オフ)。保存があればその値を反映。
         let isMuted = (savedMute === null) ? true : (savedMute === 'true');
 
         const ui = {
@@ -85,7 +86,7 @@
             mute: document.getElementById('muteBtn')
         };
         
-        // アイコン表示の初期化
+        // アイコンの初期状態をセット
         ui.mute.innerText = isMuted ? '🔇' : '🔊';
 
         const buttons = {
@@ -180,15 +181,18 @@
         function switchBgm(newBgm) {
             if (currentBgm) currentBgm.pause();
             currentBgm = newBgm;
-            // ユーザーが一度でも画面を触っていれば再生可能
             if (!isMuted && currentBgm) {
-                currentBgm.play().catch(e => console.log("Audio play blocked until interaction"));
+                // ブラウザのブロックを回避するため、常に play() を試みる
+                currentBgm.play().catch(() => {
+                    console.log("Audio waiting for user interaction...");
+                });
             }
         }
 
-        buttons.mute.onclick = (e) => {
+        // ミュートボタンのクリック処理
+        buttons.mute.onclick = () => {
             isMuted = !isMuted;
-            sessionStorage.setItem('isMuted', isMuted); // 状態を保存
+            sessionStorage.setItem('isMuted', isMuted);
             ui.mute.innerText = isMuted ? '🔇' : '🔊';
             if (isMuted) {
                 if (currentBgm) currentBgm.pause();
@@ -198,6 +202,7 @@
             }
         };
 
+        // STARTボタンを押した瞬間に音声を「解禁」する
         buttons.start.onclick = () => {
             audioCtx.resume();
             buttons.start.style.display = 'none';
@@ -224,6 +229,7 @@
         };
         
         buttons.retry.onclick = () => {
+            // リロードしても sessionStorage の値は残ります
             location.reload(); 
         };
 
@@ -290,4 +296,44 @@
         function updateScore(pts) { score += pts; ui.score.innerText = score; if (score > bestScore) { bestScore = score; ui.best.innerText = bestScore; localStorage.setItem('bestScore', bestScore); } }
 
         function draw() {
-            const squish = 1 + Math.sin(frame *
+            const squish = 1 + Math.sin(frame * 0.15) * 0.1;
+            bullets.forEach(b => ctx.drawImage(img.candy, b.x - b.width/2, b.y - b.height/2, b.width, b.height));
+            items.forEach(it => ctx.drawImage(img.hana, it.x - it.width/2, it.y - it.height/2, it.width, it.height));
+            enemies.forEach(e => drawPuniPuni(e.img, e.x, e.y, e.width, e.height, squish, true));
+            drawPuniPuni(img.hamu, player.x, player.y, player.width, player.height, squish);
+            if (boss) {
+                drawPuniPuni(boss.img, boss.x, boss.y, boss.width, boss.height, squish, true);
+                ctx.fillStyle = '#eee'; ctx.fillRect(boss.x - boss.width/2, boss.y - boss.height/2 - 30, boss.width, 12);
+                ctx.fillStyle = '#ff1493'; ctx.fillRect(boss.x - boss.width/2, boss.y - boss.height/2 - 30, (boss.hp/boss.maxHp)*boss.width, 12);
+            }
+        }
+
+        function drawPuniPuni(image, x, y, width, height, squish, reverse = false) {
+            ctx.save(); ctx.translate(x, y);
+            if (reverse) ctx.scale(2 - squish, squish); else ctx.scale(squish, 2 - squish);
+            ctx.drawImage(image, -width/2, -height/2, width, height); ctx.restore();
+        }
+
+        function endGame(state) { gameState = state; buttons.retry.style.display = 'block'; buttons.pause.style.display = 'none'; }
+
+        function drawResult() {
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.textAlign = 'center'; ctx.fillStyle = '#ff69b4'; ctx.font = 'bold 32px sans-serif';
+            ctx.fillText(gameState === 'GAMEOVER' ? 'おなかいっぱい…' : `✨ ${currentConfig.name} 完食！ ✨`, canvas.width/2, canvas.height/2 - 20);
+        }
+
+        let isPressing = false;
+        // マウス追従
+        window.addEventListener('mousemove', (e) => { handleMove(e); });
+        window.addEventListener('mousedown', (e) => { isPressing = true; });
+        window.addEventListener('mouseup', () => isPressing = false);
+        
+        // スマホ
+        canvas.addEventListener('touchstart', (e) => { isPressing = true; handleMove(e); e.preventDefault(); }, {passive: false});
+        window.addEventListener('touchend', () => isPressing = false);
+        window.addEventListener('touchmove', (e) => { handleMove(e); e.preventDefault(); }, {passive: false});
+
+        loop();
+    </script>
+</body>
+</html>
