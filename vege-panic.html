@@ -22,26 +22,32 @@
             pointer-events: none; z-index: 10; text-shadow: 2px 2px white;
         }
 
+        /* ボタンの基本設定 */
         .btn { 
             position: absolute; padding: 12px 24px; font-size: 18px; 
             font-weight: bold; color: white; background: #ff69b4; 
             border: none; border-radius: 30px; cursor: pointer; 
             box-shadow: 0 4px #d85091; z-index: 100;
             touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+            left: 50%; transform: translateX(-50%); /* 常に中央寄せ */
         }
-        .btn:active { transform: translateY(2px); box-shadow: 0 1px #d85091; }
+        .btn:active { transform: translateX(-50%) translateY(2px); box-shadow: 0 1px #d85091; }
         
-        #muteBtn { top: 10px; right: 10px; width: 44px; height: 44px; padding: 0; font-size: 20px; background: #ffb6c1; border-radius: 50%; }
-        #pauseBtn { top: 10px; right: 65px; font-size: 14px; background: #ffb6c1; display: none; }
+        /* 特殊な位置のボタン */
+        #muteBtn { top: 10px; right: 10px; left: auto; transform: none; width: 44px; height: 44px; padding: 0; font-size: 20px; background: #ffb6c1; border-radius: 50%; }
+        #muteBtn:active { transform: translateY(2px); }
+
+        #pauseBtn { top: 10px; right: 65px; left: auto; transform: none; font-size: 14px; background: #ffb6c1; display: none; }
+        #pauseBtn:active { transform: translateY(2px); }
         
-        #startBtn { top: 60%; left: 50%; transform: translate(-50%, -50%); width: 220px; }
+        #startBtn { top: 60%; width: 220px; }
         
-        .difficulty-btn { left: 50%; transform: translateX(-50%); width: 200px; display: none; }
+        .difficulty-btn { width: 200px; display: none; }
         #easyBtn { top: 48%; background: #98fb98; box-shadow: 0 4px #6ac46a;}
         #normalBtn { top: 60%; background: #ffd700; box-shadow: 0 4px #b89b00;}
         #hardBtn { top: 72%; background: #ff4500; box-shadow: 0 4px #b33000;}
         
-        #retryBtn { top: 65%; left: 50%; transform: translate(-50%, -50%); display: none; width: 200px; }
+        #retryBtn { top: 65%; width: 200px; display: none; }
         #item-timer { color: #ff1493; font-size: 14px; display: none; }
     </style>
 </head>
@@ -71,7 +77,6 @@
         const ctx = canvas.getContext('2d');
         
         // --- 音声設定管理 ---
-        // sessionStorage を使用。ブラウザを開き直した時は必ず null なので true (オフ) になる。
         let isMuted = sessionStorage.getItem('isMuted') === null ? true : (sessionStorage.getItem('isMuted') === 'true');
 
         const ui = {
@@ -199,7 +204,8 @@
         buttons.start.onclick = () => {
             audioCtx.resume();
             buttons.start.style.display = 'none';
-            buttons.easy.style.display = buttons.normal.style.display = buttons.hard.style.display = 'block';
+            // 表示を inline-block にして中央寄せ transform を維持
+            buttons.easy.style.display = buttons.normal.style.display = buttons.hard.style.display = 'inline-block';
             switchBgm(bgm.opening);
         };
 
@@ -207,7 +213,7 @@
             currentConfig = configs[difficulty];
             ui.diff.innerText = `Course: ${currentConfig.name}`;
             buttons.easy.style.display = buttons.normal.style.display = buttons.hard.style.display = 'none';
-            buttons.pause.style.display = 'block';
+            buttons.pause.style.display = 'inline-block';
             ui.title.style.display = 'none';
             gameState = 'PLAY';
             switchBgm(currentConfig.bgm);
@@ -306,7 +312,7 @@
             ctx.drawImage(image, -width/2, -height/2, width, height); ctx.restore();
         }
 
-        function endGame(state) { gameState = state; buttons.retry.style.display = 'block'; buttons.pause.style.display = 'none'; }
+        function endGame(state) { gameState = state; buttons.retry.style.display = 'inline-block'; buttons.pause.style.display = 'none'; }
 
         function drawResult() {
             ctx.fillStyle = 'rgba(255, 255, 255, 0.8)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -315,12 +321,10 @@
         }
 
         let isPressing = false;
-        // マウス追従（クリック不要）
         window.addEventListener('mousemove', handleMove);
         window.addEventListener('mousedown', () => isPressing = true);
         window.addEventListener('mouseup', () => isPressing = false);
         
-        // スマホ用
         canvas.addEventListener('touchstart', (e) => { isPressing = true; handleMove(e); e.preventDefault(); }, {passive: false});
         window.addEventListener('touchend', () => isPressing = false);
         window.addEventListener('touchmove', (e) => { handleMove(e); e.preventDefault(); }, {passive: false});
