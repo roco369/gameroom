@@ -11,7 +11,7 @@
             --accent-color: #ff4081;
             --bg-fallback: linear-gradient(135deg, #fff5f7 0%, #f0f4ff 100%);
             
-            /* 背景画像パス（お祝いジェネレーター素材フォルダを指定） */
+            /* 背景画像 (.png) */
             --bg-sakura-img: url('お祝いジェネレーター素材/桜吹雪背景.png'); 
             --bg-party-img: url('お祝いジェネレーター素材/パーティー背景.png');
             --bg-sunset-img: url('お祝いジェネレーター素材/夕焼け背景.png');
@@ -38,7 +38,8 @@
             font-size: 1.5rem; font-weight: bold; font-family: inherit;
             background: linear-gradient(45deg, #ff7eb3, #ff758c);
             color: white; border: none; padding: 20px 40px; border-radius: 60px;
-            box-shadow: 0 6px 25px rgba(255, 126, 179, 0.6); cursor: pointer;
+            box-shadow: 0 6px 25px rgba(255, 126, 179, 0.6); 
+            cursor: pointer; animation: pulse 1.5s infinite;
         }
 
         /* 設定画面 */
@@ -72,41 +73,76 @@
         .bg-cute { background-image: var(--bg-cute-img); animation: bg-shake-slow 18s ease-in-out infinite; }
         .bg-sunlight { background-image: var(--bg-sunlight-img); animation: bg-shake 14s ease-in-out infinite; }
 
-        @keyframes bg-zoom-slow { 0% { transform: scale(1.05); } 100% { transform: scale(1.15); } }
+        @keyframes bg-shake { 0%, 100% { transform: scale(1.05) translate(0,0); } 50% { transform: scale(1.07) translate(5px, 5px); } }
+        @keyframes bg-shake-slow { 0%, 100% { transform: scale(1.02) translate(0,0); } 50% { transform: scale(1.03) translate(-3px, 2px); } }
         @keyframes bg-zoom { 0% { transform: scale(1); } 100% { transform: scale(1.1); } }
+        @keyframes bg-zoom-slow { 0% { transform: scale(1.05); } 100% { transform: scale(1.15); } }
 
-        /* テキスト表示（スマホ対応） */
-        #text-container { 
-            z-index: 10; padding: 20px; width: 90%; max-width: 600px;
-            opacity: 0; /* 最初は非表示 */
-        }
-        .active-text { animation: celebrateIn 1.5s ease-out forwards; }
-
+        /* テキスト表示（きらきらMAX） */
+        #text-container { z-index: 10; padding: 20px; animation: celebrateIn 1.5s ease-out forwards; opacity: 0; width: 90%; }
+        
         #display-name { 
-            font-size: clamp(1.8rem, 8vw, 3rem); 
-            color: #ff4081; margin-bottom: 10px; font-weight: bold;
-            text-shadow: 3px 3px 0 #fff, -3px -3px 0 #fff, 3px -3px 0 #fff, -3px 3px 0 #fff;
-            animation: text-glow-strong 2s ease-in-out infinite alternate;
+            font-size: clamp(2rem, 9vw, 3rem); 
+            color: #ff4081; 
+            margin-bottom: 15px;
+            font-weight: bold;
+            /* 袋文字 */
+            text-shadow: 
+                3px 3px 0 #fff, -3px -3px 0 #fff, 3px -3px 0 #fff, -3px 3px 0 #fff,
+                0px 3px 0 #fff,  0px -3px 0 #fff, 3px 0px 0 #fff, -3px 0px 0 #fff;
+            animation: text-shine-gold 3s linear infinite, text-glow-strong 2s ease-in-out infinite alternate;
         }
 
         #display-msg { 
-            font-size: clamp(2rem, 10vw, 4rem); font-weight: bold; color: #333; line-height: 1.2; 
-            overflow-wrap: anywhere; /* ❤などの改行対策 */
+            font-size: clamp(2.5rem, 11vw, 4.5rem); 
+            font-weight: bold; 
+            color: #333; 
+            line-height: 1.2; 
+            word-break: break-all;
             animation: text-glow-white 3s ease-in-out infinite alternate;
         }
 
-        @keyframes text-glow-strong { 0% { transform: scale(1); } 100% { transform: scale(1.03); } }
-        @keyframes text-glow-white { 0% { text-shadow: 0 0 10px rgba(255,255,255,0.6); } 100% { text-shadow: 0 0 40px rgba(255,255,255,1); } }
-        @keyframes celebrateIn { 0% { opacity: 0; transform: translateY(30px); } 100% { opacity: 1; transform: translateY(0); } }
+        /* 文字きらきらアニメーション */
+        @keyframes text-shine-gold {
+            0% { color: #ff4081; filter: drop-shadow(0 0 5px #fff); }
+            50% { color: #ff80ab; filter: drop-shadow(0 0 20px #fff) brightness(1.2); }
+            100% { color: #ff4081; filter: drop-shadow(0 0 5px #fff); }
+        }
+        @keyframes text-glow-strong {
+            0% { transform: scale(1); filter: brightness(1); }
+            100% { transform: scale(1.05); filter: brightness(1.3) drop-shadow(0 0 25px rgba(255,255,255,1)); }
+        }
+        @keyframes text-glow-white {
+            0% { text-shadow: 0 0 10px rgba(255,255,255,0.6); }
+            100% { text-shadow: 0 0 40px rgba(255,255,255,1), 0 0 15px rgba(255,192,203,0.8); }
+        }
 
-        /* 飾りパーツ */
+        @keyframes celebrateIn {
+            0% { opacity: 0; transform: translateY(30px) scale(0.9); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* 飾りパーツ（出現位置を調整） */
         .particle { position: absolute; pointer-events: none; z-index: 5; background-size: contain; background-repeat: no-repeat; }
+
+        /* 下から上へ */
         .anim-rise-straight { animation: rise-straight linear infinite; }
         @keyframes rise-straight {
             0% { transform: translateY(100vh); opacity: 0; }
             10% { opacity: 1; }
+            90% { opacity: 1; }
             100% { transform: translateY(-25vh); opacity: 0; }
         }
+
+        /* 下から上へ（回転あり） */
+        .anim-rise-rotate { animation: rise-rotate linear infinite; }
+        @keyframes rise-rotate {
+            0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 1; }
+            100% { transform: translateY(-25vh) rotate(360deg); opacity: 0; }
+        }
+
+        /* 上から斜め下へ */
         .anim-fall-diagonal { animation: fall-diagonal linear infinite; }
         @keyframes fall-diagonal {
             0% { transform: translate(-10vw, 0vh) rotate(0deg); opacity: 0; }
@@ -114,23 +150,30 @@
             100% { transform: translate(15vw, 105vh) rotate(540deg); opacity: 0; }
         }
 
-        #back-btn { position: absolute; bottom: 80px; background:rgba(255,255,255,0.8); border:1px solid #ddd; padding:12px 30px; border-radius:30px; cursor:pointer; z-index:100; }
+        /* 戻るボタン（位置を調整） */
+        #back-btn { 
+            position: absolute; bottom: 90px;
+            color:#555; background:rgba(255,255,255,0.8); 
+            border:1px solid #ddd; padding:12px 40px; 
+            border-radius:30px; font-size:0.95rem; cursor:pointer; z-index:100;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
     </style>
 </head>
 <body>
 
     <div id="auto-play-screen">
-        <h2 id="auto-play-title" style="margin-bottom: 30px;">お祝いが届いています</h2>
+        <h2 id="auto-play-title" style="margin-bottom: 30px;">メッセージが届いています</h2>
         <button id="auto-play-btn">お祝いをみる</button>
     </div>
 
     <div id="setup-screen">
         <div class="container">
             <h2>Celebration Maker</h2>
-            <div class="input-group"><label>名前</label><input type="text" id="user-name" placeholder="例：〇〇ちゃん"></div>
-            <div class="input-group"><label>メッセージ</label><textarea id="user-text" rows="2">おめでとう❤</textarea></div>
+            <div class="input-group"><label>贈る相手の名前</label><input type="text" id="user-name" placeholder="例：●●ちゃん"></div>
+            <div class="input-group"><label>メッセージ</label><textarea id="user-text" rows="2">退職おめでとう！</textarea></div>
             <div class="input-group">
-                <label>背景</label>
+                <label>背景（シーン）</label>
                 <select id="bg-image-choice">
                     <option value="bg-sakura">🌸 桜吹雪</option>
                     <option value="bg-party">🎉 パーティー</option>
@@ -147,8 +190,137 @@
                     <option value="heart">❤️ ハートセット</option>
                     <option value="kirakira">✨ きらきらパーツ</option>
                     <option value="ribbon">🎀 りぼんパーツ</option>
+                    <option value="none">なし</option>
                 </select>
             </div>
             <div class="input-group">
-                <label>BGM</label>
-                <select id="bgm-choice
+                <label>BGMを選択</label>
+                <select id="bgm-choice">
+                    <option value="お祝いジェネレーター素材/music1.mp3">BGM 1 (明るい)</option>
+                    <option value="お祝いジェネレーター素材/music2.mp3">BGM 2 (しっとり)</option>
+                    <option value="お祝いジェネレーター素材/music3.mp3">BGM 3 (オルゴール風)</option>
+                    <option value="お祝いジェネレーター素材/music4.mp3">BGM 4 (エモーショナル)</option>
+                    <option value="お祝いジェネレーター素材/music5.mp3">BGM 5 (ポップかわいい)</option>
+                </select>
+            </div>
+            <div class="btn-area">
+                <button id="start-btn">演出を再生する</button>
+                <button id="share-btn">このお祝いのリンクを作る</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="celebration-screen">
+        <div id="text-container"><div id="display-name"></div><div id="display-msg"></div></div>
+        <audio id="bgm-player" loop></audio>
+        <button id="back-btn">← 作り直す</button>
+    </div>
+
+    <script>
+        const startBtn = document.getElementById('start-btn');
+        const shareBtn = document.getElementById('share-btn');
+        const backBtn = document.getElementById('back-btn');
+        const setupScreen = document.getElementById('setup-screen');
+        const celebScreen = document.getElementById('celebration-screen');
+        const autoPlayScreen = document.getElementById('auto-play-screen');
+        const autoPlayBtn = document.getElementById('auto-play-btn');
+        const bgmPlayer = document.getElementById('bgm-player');
+
+        // パーツ設定（サイズを大きく調整）
+        const decoConfig = {
+            sakura: { images: ['お祝いジェネレーター素材/桜吹雪パーツ1.png', 'お祝いジェネレーター素材/桜吹雪パーツ2.png'], anim: 'anim-fall-diagonal', minSize: 35, maxSize: 55 },
+            balloon: { images: ['お祝いジェネレーター素材/バルーン1.png', 'お祝いジェネレーター素材/バルーン2.png', 'お祝いジェネレーター素材/バルーン3.png'], anim: 'anim-rise-straight', minSize: 100, maxSize: 150 },
+            heart: { images: ['お祝いジェネレーター素材/ハート1.png', 'お祝いジェネレーター素材/ハート2.png', 'お祝いジェネレーター素材/ハート3.png', 'お祝いジェネレーター素材/ハート4.png'], anim: 'anim-rise-straight', minSize: 70, maxSize: 110 },
+            kirakira: { images: ['お祝いジェネレーター素材/きらきらパーツ.png'], anim: 'anim-rise-rotate', minSize: 45, maxSize: 70 },
+            ribbon: { images: ['お祝いジェネレーター素材/りぼんパーツ.png'], anim: 'anim-rise-rotate', minSize: 60, maxSize: 90 },
+            none: { images: [], anim: '', minSize: 0, maxSize: 0 }
+        };
+
+        let particleInterval;
+        let urlParams = new URLSearchParams(window.location.search);
+
+        window.onload = () => {
+            if (urlParams.has('msg')) {
+                autoPlayScreen.style.display = 'flex';
+                const nameStr = urlParams.get('name') || "";
+                if(nameStr) document.getElementById('auto-play-title').innerText = `${decodeURIComponent(nameStr)} ちゃんへのお祝いです`;
+            }
+        };
+
+        autoPlayBtn.addEventListener('click', () => {
+            autoPlayScreen.style.display = 'none';
+            runCelebration(decodeURIComponent(urlParams.get('name')||""), decodeURIComponent(urlParams.get('msg')), decodeURIComponent(urlParams.get('bg_img')||"bg-sakura"), decodeURIComponent(urlParams.get('deco')||"sakura"), decodeURIComponent(urlParams.get('bgm')||"お祝いジェネレーター素材/music1.mp3"));
+        });
+
+        startBtn.addEventListener('click', () => {
+            runCelebration(document.getElementById('user-name').value, document.getElementById('user-text').value, document.getElementById('bg-image-choice').value, document.getElementById('deco-choice').value, document.getElementById('bgm-choice').value);
+        });
+
+        function runCelebration(name, msg, bgClass, decoKey, bgmFile) {
+            setupScreen.style.display = 'none';
+            celebScreen.style.display = 'flex';
+            celebScreen.className = ""; 
+            celebScreen.classList.add(bgClass);
+            document.getElementById('display-name').innerText = name || "";
+            document.getElementById('display-msg').innerText = msg;
+            bgmPlayer.src = bgmFile;
+            bgmPlayer.play().catch(e => console.log("再生不可"));
+
+            if (decoKey !== 'none') {
+                // 【初期バースト】再生した瞬間に画面内のランダムな位置に5つ生成
+                for(let i=0; i<5; i++) {
+                    createParticle(decoKey, true); 
+                }
+                // その後、定期的に生成
+                particleInterval = setInterval(() => createParticle(decoKey, false), 250); 
+            }
+        }
+
+        function createParticle(key, isInitial) {
+            const config = decoConfig[key];
+            if (!config || config.images.length === 0) return;
+            const imgSrc = config.images[Math.floor(Math.random() * config.images.length)];
+            const p = document.createElement('div');
+            p.classList.add('particle', config.anim);
+            p.style.backgroundImage = `url('${imgSrc}')`;
+            p.style.left = Math.random() * 100 + 'vw';
+            
+            const size = Math.random() * (config.maxSize - config.minSize) + config.minSize;
+            p.style.width = size + 'px';
+            p.style.height = size + 'px';
+            
+            // 速度（さらにゆったり：12〜18秒）
+            const duration = Math.random() * 6 + 12;
+            p.style.animationDuration = duration + 's';
+
+            // 初期生成の場合は、開始位置（top）を画面内のランダムな場所に、
+            // アニメーションの進捗をランダムにする
+            if (isInitial) {
+                p.style.top = Math.random() * 80 + 10 + 'vh'; // 画面の10%〜90%の間に配置
+                p.style.animationDelay = `-${Math.random() * duration}s`; // アニメーションを途中から開始
+            }
+
+            celebScreen.appendChild(p);
+            setTimeout(() => p.remove(), duration * 1000);
+        }
+
+        shareBtn.addEventListener('click', () => {
+            const name = encodeURIComponent(document.getElementById('user-name').value);
+            const msg = encodeURIComponent(document.getElementById('user-text').value);
+            const bg_img = encodeURIComponent(document.getElementById('bg-image-choice').value);
+            const deco = encodeURIComponent(document.getElementById('deco-choice').value);
+            const bgm = encodeURIComponent(document.getElementById('bgm-choice').value);
+            const shareUrl = `${window.location.origin}${window.location.pathname}?name=${name}&msg=${msg}&bg_img=${bg_img}&deco=${deco}&bgm=${bgm}`;
+            navigator.clipboard.writeText(shareUrl).then(() => alert("このお祝いの専用リンクをコピーしました！"));
+        });
+
+        backBtn.addEventListener('click', () => {
+            bgmPlayer.pause();
+            clearInterval(particleInterval);
+            setupScreen.style.display = 'flex';
+            celebScreen.style.display = 'none';
+            document.querySelectorAll('.particle').forEach(p => p.remove());
+        });
+    </script>
+</body>
+</html>
