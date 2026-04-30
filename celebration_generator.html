@@ -267,45 +267,60 @@
 
         function runCelebration(name, msg, bgClass, decoKey, bgmFile) {
             setupScreen.style.display = 'none';
-            celebScreen.style.display = 'flex';
+
+            // いったん非表示にしてDOMをリセット
+            celebScreen.style.display = 'none';
             celebScreen.className = '';
             celebScreen.classList.add(bgClass);
 
             const nameEl = document.getElementById('display-name');
             const msgEl  = document.getElementById('display-msg');
-
-            // いったんリセット
             nameEl.style.fontSize = '';
             msgEl.style.fontSize  = '';
             nameEl.innerText = '';
             msgEl.innerText  = '';
 
-            // DOMが確実に描画されてからテキストをセット＆サイズ調整
-            requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
-                    nameEl.innerText = name || '';
-                    msgEl.innerText  = msg  || '';
-                    fitText(nameEl, 'name');
-                    fitText(msgEl,  'msg');
-                });
-            });
+            // パーティクルをクリア
+            document.querySelectorAll('.particle').forEach(p => p.remove());
+            clearInterval(particleInterval);
 
+            // 表示してからテキストをセット（iOSのリフロー完了を待つ）
+            celebScreen.style.display = 'flex';
+
+            // テキストを先にセット（フォントサイズはデフォルト値から）
+            nameEl.innerText = name || '';
+            msgEl.innerText  = msg  || '';
+
+            // 2段階で調整（100ms後 + 400ms後の2回）
+            setTimeout(function() {
+                fitText(nameEl, 'name');
+                fitText(msgEl,  'msg');
+            }, 100);
+            setTimeout(function() {
+                fitText(nameEl, 'name');
+                fitText(msgEl,  'msg');
+            }, 400);
+
+            bgmPlayer.pause();
+            bgmPlayer.currentTime = 0;
             bgmPlayer.src = bgmFile;
             bgmPlayer.play().catch(e => console.log('再生不可'));
 
             const config = decoConfig[decoKey];
             if (config && decoKey !== 'none') {
-                for (let i = 0; i < config.burst; i++) {
-                    createParticle(decoKey, true);
-                }
-                particleInterval = setInterval(() => createParticle(decoKey, false), config.interval);
+                setTimeout(function() {
+                    for (let i = 0; i < config.burst; i++) {
+                        createParticle(decoKey, true);
+                    }
+                    particleInterval = setInterval(() => createParticle(decoKey, false), config.interval);
+                }, 200);
             }
         }
 
         // テキストを画面幅に収まるよう自動サイズ調整
         function fitText(el, type) {
             const container = document.getElementById('text-container');
-            const maxW = container.offsetWidth - 20; // 左右余白
+            const maxW = (container.offsetWidth || window.innerWidth * 0.92) - 20;
 
             if (type === 'name') {
                 // 名前は1行に収める
